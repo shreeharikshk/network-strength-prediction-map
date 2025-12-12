@@ -1,0 +1,2553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SignalScope - Network Signal Predictor</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css" />
+    
+    <!-- Custom CSS -->
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+
+        /* Landing Page Styles */
+        .landing-page {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .hero-container {
+            max-width: 1200px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 60px;
+            align-items: center;
+        }
+
+        .hero-content {
+            color: white;
+        }
+
+        .hero-content h1 {
+            font-size: 4rem;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+            background: linear-gradient(45deg, #fff, #e0e7ff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-content .subtitle {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+
+        .hero-features {
+            margin: 30px 0;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin: 15px 0;
+            font-size: 1.1rem;
+        }
+
+        .feature-icon {
+            font-size: 1.5rem;
+            margin-right: 15px;
+            width: 40px;
+        }
+
+        .cta-button {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            padding: 20px 40px;
+            font-size: 1.3rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(255, 107, 107, 0.4);
+        }
+
+        .hero-visual {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+        }
+
+        .demo-map {
+            width: 100%;
+            height: 300px;
+            background: linear-gradient(135deg, #4CAF50, #2196F3, #F44336);
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .demo-path {
+            position: absolute;
+            top: 50%;
+            left: 20px;
+            right: 20px;
+            height: 4px;
+            background: repeating-linear-gradient(
+                90deg,
+                #4CAF50 0px,
+                #4CAF50 30px,
+                #2196F3 30px,
+                #2196F3 60px,
+                #F44336 60px,
+                #F44336 90px
+            );
+            border-radius: 2px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.8; }
+            50% { opacity: 1; }
+        }
+
+        .demo-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        /* Login Page Styles */
+        .login-page {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .login-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 400px;
+            width: 100%;
+        }
+
+        .login-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .login-header h2 {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .login-header p {
+            color: #666;
+            font-size: 1rem;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+            font-weight: bold;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e1e1;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: rgba(255, 255, 255, 0.8);
+        }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #667eea;
+            background: white;
+        }
+
+        .login-button {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .login-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Carrier Selection Styles */
+        .carrier-page {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .carrier-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        .carrier-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .carrier-header h2 {
+            color: #333;
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .carrier-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .carrier-card {
+            background: white;
+            border: 3px solid #e1e1e1;
+            border-radius: 15px;
+            padding: 30px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .carrier-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.1);
+        }
+
+        .carrier-card.selected {
+            border-color: #667eea;
+            background: linear-gradient(135deg, #667eea10, #764ba210);
+        }
+
+        .carrier-logo {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .carrier-name {
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .carrier-info {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .continue-button {
+            width: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .continue-button.enabled {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        .continue-button.enabled:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+        }
+
+        /* Subscription Page Styles */
+        .subscription-page {
+            display: none;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .subscription-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .subscription-header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .subscription-header h2 {
+            color: #333;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subscription-header p {
+            color: #666;
+            font-size: 1.1rem;
+        }
+
+        .pricing-cards {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .pricing-card {
+            background: white;
+            border: 3px solid #e1e1e1;
+            border-radius: 20px;
+            padding: 40px 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .pricing-card.premium {
+            border-color: #ff6b6b;
+            background: linear-gradient(135deg, #ff6b6b10, #feca5710);
+            transform: scale(1.05);
+        }
+
+        .pricing-card.premium::before {
+            content: "RECOMMENDED";
+            position: absolute;
+            top: -15px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            letter-spacing: 1px;
+        }
+
+        .plan-name {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .plan-price {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #ff6b6b;
+            margin-bottom: 5px;
+        }
+
+        .plan-period {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .plan-features {
+            text-align: left;
+            margin-bottom: 30px;
+        }
+
+        .feature {
+            display: flex;
+            align-items: center;
+            margin: 12px 0;
+            font-size: 1rem;
+        }
+
+        .feature-icon {
+            margin-right: 12px;
+            font-size: 1.2rem;
+        }
+
+        .feature.premium {
+            color: #ff6b6b;
+            font-weight: 500;
+        }
+
+        .select-plan-btn {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #667eea;
+            background: transparent;
+            color: #667eea;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .select-plan-btn.premium {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            border: none;
+            color: white;
+        }
+
+        .select-plan-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .select-plan-btn.premium:hover {
+            box-shadow: 0 10px 30px rgba(255, 107, 107, 0.3);
+        }
+
+        .skip-btn {
+            display: block;
+            margin: 20px auto 0;
+            background: none;
+            border: none;
+            color: #666;
+            text-decoration: underline;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        /* Premium Features Styles */
+        .premium-features {
+            display: none;
+        }
+
+        .premium-badge {
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .advanced-analysis {
+            background: linear-gradient(135deg, #ff6b6b10, #feca5710);
+            border: 2px solid #ff6b6b;
+            margin-top: 15px;
+            padding: 20px;
+            border-radius: 15px;
+        }
+
+        .weather-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #2196F3;
+        }
+
+        .traffic-info {
+            background: #fff3e0;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #ff9800;
+        }
+
+        .prediction-accuracy {
+            background: #f3e5f5;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #9c27b0;
+        }
+
+        /* Main App Styles */
+        .app-container {
+            display: none;
+        }
+
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .demo-data-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 10px;
+            border: 2px solid #ffeaa7;
+        }
+
+        .demo-routes {
+            margin-top: 10px;
+        }
+
+        .demo-route-btn {
+            width: 100%;
+            margin: 5px 0;
+            padding: 10px;
+            background: linear-gradient(45deg, #ff6b6b, #feca57);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .demo-route-btn:hover {
+            transform: translateY(-1px);
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: 20px;
+            height: 600px;
+        }
+        
+        .map-container {
+            position: relative;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+            border-radius: 15px;
+        }
+        
+        .control-panel {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .location-input {
+            margin-bottom: 20px;
+        }
+        
+        .location-input h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.2rem;
+        }
+        
+        .input-group {
+            margin-bottom: 15px;
+        }
+        
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #666;
+            font-weight: bold;
+        }
+        
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e1e1e1;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+        
+        .input-group input:focus, .input-group select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .signal-info {
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .signal-card {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+        
+        .signal-card.good { border-left-color: #4CAF50; }
+        .signal-card.average { border-left-color: #2196F3; }
+        .signal-card.no-signal { border-left-color: #F44336; }
+        
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .route-legend {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f0f8ff;
+            border-radius: 10px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 4px;
+            margin-right: 10px;
+            border-radius: 2px;
+        }
+        
+        .current-location-info {
+            background: #e8f5e8;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #4CAF50;
+        }
+        
+        .instruction {
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            color: #1565c0;
+        }
+        
+        /* Alert Notification Styles */
+        .alert-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #fff3cd;
+            border: 2px solid #ffeaa7;
+            border-radius: 10px;
+            padding: 15px 20px;
+            max-width: 400px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            z-index: 10000;
+            transform: translateX(450px);
+            transition: transform 0.3s ease-in-out;
+        }
+        
+        .alert-notification.show {
+            transform: translateY(0);
+        }
+        
+        .alert-notification.warning {
+            background: #fff3cd;
+            border-color: #ffeaa7;
+            color: #856404;
+        }
+        
+        .alert-notification.danger {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+        
+        .alert-notification.success {
+            background: #d4edda;
+            border-color: #c3e6cb;
+            color: #155724;
+        }
+        
+        .alert-close {
+            float: right;
+            background: none;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: inherit;
+            margin-left: 10px;
+        }
+        
+        .alert-title {
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        
+        .route-analysis {
+            margin-top: 15px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .analysis-item {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            padding: 8px;
+            background: white;
+            border-radius: 5px;
+        }
+        
+        @media (max-width: 768px) {
+            .hero-container {
+                grid-template-columns: 1fr;
+                gap: 40px;
+            }
+
+            .hero-content h1 {
+                font-size: 3rem;
+            }
+
+            .carrier-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .pricing-cards {
+                grid-template-columns: 1fr;
+            }
+
+            .pricing-card.premium {
+                transform: none;
+            }
+            
+            .main-content {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .map-container {
+                height: 400px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .alert-notification {
+                top: 10px;
+                right: 10px;
+                left: 10px;
+                max-width: none;
+                transform: translateY(-100px);
+            }
+            
+            .alert-notification.show {
+                transform: translateY(0);
+            }
+        }
+        
+        /* Demo Simulation Button Styles */
+        .demo-simulation-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 25px;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            z-index: 1000;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            transition: all 0.3s ease;
+            display: none;
+        }
+        
+        .demo-simulation-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+        
+        .demo-simulation-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        /* Simulation Info Panel */
+        .simulation-info {
+            position: fixed;
+            top: 70px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px 20px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            z-index: 999;
+            min-width: 200px;
+            display: none;
+        }
+        
+        .simulation-info h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 16px;
+        }
+        
+        .simulation-stat {
+            display: flex;
+            justify-content: space-between;
+            margin: 8px 0;
+            font-size: 14px;
+        }
+        
+        .simulation-stat .label {
+            color: #666;
+        }
+        
+        .simulation-stat .value {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .signal-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-left: 5px;
+        }
+        
+        /* Speed Selection Menu */
+        .speed-menu {
+            position: fixed;
+            top: 70px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.2);
+            z-index: 998;
+            min-width: 180px;
+            display: none;
+        }
+        
+        .speed-menu h4 {
+            margin: 0 0 10px 0;
+            color: #333;
+            font-size: 14px;
+            text-align: center;
+        }
+        
+        .speed-option {
+            display: block;
+            width: 100%;
+            padding: 8px 12px;
+            margin: 5px 0;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .speed-option:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 3px 10px rgba(102, 126, 234, 0.3);
+        }
+        
+        .speed-option.fast {
+            background: linear-gradient(45deg, #FF6B6B, #FF8E8E);
+        }
+        
+        .speed-option.medium {
+            background: linear-gradient(45deg, #4ECDC4, #44A08D);
+        }
+        
+        .speed-option.slow {
+            background: linear-gradient(45deg, #FFD93D, #FF6B6B);
+        }
+        
+        .speed-option.extreme-slow {
+            background: linear-gradient(45deg, #A8E6CF, #88D8A3);
+        }
+    </style>
+</head>
+<body>
+    <!-- Landing Page -->
+    <div id="landingPage" class="landing-page">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1>🛰️ SignalScope</h1>
+                <p class="subtitle">Predict network signal strength along your route before you travel</p>
+                
+                <div class="hero-features">
+                    <div class="feature-item">
+                        <span class="feature-icon">🗺️</span>
+                        <span>Real-time route analysis with signal prediction</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">📶</span>
+                        <span>Support for all major carriers in India</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">⚠️</span>
+                        <span>Smart alerts for no-signal areas</span>
+                    </div>
+                    <div class="feature-item">
+                        <span class="feature-icon">💡</span>
+                        <span>Travel tips for connectivity dead zones</span>
+                    </div>
+                </div>
+
+                <button class="cta-button" onclick="showLogin()">
+                    Get Started →
+                </button>
+            </div>
+
+            <div class="hero-visual">
+                <div class="demo-map">
+                    <div class="demo-path"></div>
+                </div>
+                
+                <div class="demo-stats">
+                    <div class="stat-card">
+                        <div class="stat-number">85%</div>
+                        <div class="stat-label">Strong Signal</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">12%</div>
+                        <div class="stat-label">Average Signal</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number">3%</div>
+                        <div class="stat-label">No Signal</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Page -->
+    <div id="loginPage" class="login-page">
+        <div class="login-container">
+            <div class="login-header">
+                <h2>🛰️ SignalScope Login</h2>
+                <p>Enter your credentials to access the network predictor</p>
+            </div>
+
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" name="username" required placeholder="Enter username">
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password:</label>
+                    <input type="password" id="password" name="password" required placeholder="Enter password">
+                </div>
+
+                <button type="submit" class="login-button">Login</button>
+            </form>
+
+            <div style="margin-top: 20px; text-align: center; color: #666; font-size: 0.9rem;">
+                <p><strong>Demo Credentials:</strong></p>
+                <p>Username: admin | Password: admin</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subscription Page -->
+    <div id="subscriptionPage" class="subscription-page">
+        <div class="subscription-container">
+            <div class="subscription-header">
+                <h2>🎉 Welcome to SignalScope</h2>
+                <p>All features included - completely free!</p>
+            </div>
+
+            <div class="pricing-cards">
+                <div class="pricing-card">
+                    <div class="plan-name">All Features Included</div>
+                    <div class="plan-price">₹0</div>
+                    <div class="plan-period">Forever Free</div>
+                    <div class="plan-features">
+                        <div class="feature">
+                            <span class="feature-icon">✅</span>
+                            <span>Route planning</span>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">✅</span>
+                            <span>Signal strength prediction</span>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">✅</span>
+                            <span>6 demo routes</span>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">✅</span>
+                            <span>Smart alerts</span>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">✅</span>
+                            <span>Weather integration</span>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">✅</span>
+                            <span>Traffic analysis</span>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">✅</span>
+                            <span>AI-powered predictions</span>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">✅</span>
+                            <span>Advanced analytics</span>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">✅</span>
+                            <span>Priority support</span>
+                        </div>
+                        <div class="feature">
+                            <span class="feature-icon">✅</span>
+                            <span>Custom route optimization</span>
+                        </div>
+                    </div>
+                    <button class="select-plan-btn" onclick="selectPlan('basic')">Continue to SignalScope</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Carrier Selection Page -->
+    <div id="carrierPage" class="carrier-page">
+        <div class="carrier-container">
+            <div class="carrier-header">
+                <h2>📱 Select Your Carrier</h2>
+                <p>Choose your network provider for accurate signal prediction</p>
+            </div>
+
+            <div class="carrier-grid">
+                <div class="carrier-card" onclick="selectCarrier('JIO')">
+                    <div class="carrier-logo">🔵</div>
+                    <div class="carrier-name">Reliance Jio</div>
+                    <div class="carrier-info">4G LTE | Pan India Coverage</div>
+                </div>
+
+                <div class="carrier-card" onclick="selectCarrier('AIRTEL')">
+                    <div class="carrier-logo">🔴</div>
+                    <div class="carrier-name">Bharti Airtel</div>
+                    <div class="carrier-info">4G/5G | Premium Network</div>
+                </div>
+
+                <div class="carrier-card" onclick="selectCarrier('VI')">
+                    <div class="carrier-logo">🟣</div>
+                    <div class="carrier-name">Vi (Vodafone Idea)</div>
+                    <div class="carrier-info">4G LTE | Nationwide</div>
+                </div>
+
+                <div class="carrier-card" onclick="selectCarrier('BSNL')">
+                    <div class="carrier-logo">🟢</div>
+                    <div class="carrier-name">BSNL</div>
+                    <div class="carrier-info">2G/3G/4G | Government Network</div>
+                </div>
+            </div>
+
+            <button id="continueBtn" class="continue-button" onclick="enterApp()" disabled>
+                Continue to SignalScope
+            </button>
+        </div>
+    </div>
+
+    <!-- Demo Simulation Button and Info Panel -->
+    <button id="demoSimulationBtn" class="demo-simulation-btn" onclick="toggleDemoSimulation()">
+        🚀 Demo
+    </button>
+    
+    <div id="speedMenu" class="speed-menu">
+        <h4>⚡ Select Speed</h4>
+        <button class="speed-option fast" onclick="selectSpeed('fast')">🚀 Fast (50ms)</button>
+        <button class="speed-option medium" onclick="selectSpeed('medium')">🚶 Medium (200ms)</button>
+        <button class="speed-option slow" onclick="selectSpeed('slow')">🐌 Slow (500ms)</button>
+        <button class="speed-option extreme-slow" onclick="selectSpeed('extreme-slow')">🐢 Extreme Slow (5000ms)</button>
+    </div>
+    
+    <div id="simulationInfo" class="simulation-info">
+        <h4>🎯 Live Simulation</h4>
+        <div class="simulation-stat">
+            <span class="label">Distance:</span>
+            <span class="value" id="simDistance">-- km</span>
+        </div>
+        <div class="simulation-stat">
+            <span class="label">Duration:</span>
+            <span class="value" id="simDuration">-- min</span>
+        </div>
+        <div class="simulation-stat">
+            <span class="label">Signal:</span>
+            <span class="value" id="simSignal">
+                --
+                <span class="signal-indicator" id="signalIndicator"></span>
+            </span>
+        </div>
+        <div class="simulation-stat">
+            <span class="label">Progress:</span>
+            <span class="value" id="simProgress">0%</span>
+        </div>
+        <div class="simulation-stat">
+            <span class="label">Speed:</span>
+            <span class="value" id="simSpeed">Medium</span>
+        </div>
+    </div>
+
+    <!-- Main Application -->
+    <div id="appContainer" class="app-container">
+        <button class="logout-btn" onclick="logout()">🚪 Logout</button>
+        
+        <div class="container">
+        <div class="header">
+            <h1>🛰️ SignalScope</h1>
+            <p>Predict network signal strength along your route</p>
+        </div>
+        
+        <div class="main-content">
+            <div class="map-container">
+                <div id="map"></div>
+            </div>
+            
+            <div class="control-panel">
+                <div class="instruction">
+                    <strong>📍 How it works:</strong>
+                    <p>1. Allow location access for Point A (current location)</p>
+                    <p>2. Enter your destination as Point B</p>
+                    <p>3. Get route with signal strength prediction</p>
+                </div>
+                
+                <div id="currentLocationInfo" class="current-location-info" style="display: none;">
+                    <h4>📍 Point A (Your Location)</h4>
+                    <p id="currentLocationText">Detecting location...</p>
+                </div>
+                
+                <div class="demo-data-section">
+                    <h4>🎯 Demo Routes for Presentation</h4>
+                    <p style="font-size: 0.9rem; margin-bottom: 10px;">Click any route below to see realistic signal analysis:</p>
+                    <div style="margin-bottom: 10px;">
+                        <button id="voiceToggle" onclick="toggleVoiceAlerts()" style="background: #28a745; color: white; border: none; padding: 5px 10px; border-radius: 4px; font-size: 0.8rem;">
+                            🔊 Voice Alerts: ON
+                        </button>
+                    </div>
+                    <div class="demo-routes">
+                        <button class="demo-route-btn" onclick="loadDemoRoute('mumbai-delhi')">Mumbai → Delhi (Critical Areas)</button>
+                        <button class="demo-route-btn" onclick="loadDemoRoute('bangalore-chennai')">Bangalore → Chennai (Good Coverage)</button>
+                        <button class="demo-route-btn" onclick="loadDemoRoute('kolkata-guwahati')">Kolkata → Guwahati (Mixed Signal)</button>
+                        <button class="demo-route-btn" onclick="loadDemoRoute('delhi-manali')">Delhi → Manali (Mountain Route)</button>
+                        <button class="demo-route-btn" onclick="loadDemoRoute('bangalore-mysore')">Bangalore → Mysore (Highway)</button>
+                        <button class="demo-route-btn" onclick="loadDemoRoute('Kunigal-majestic')">Kunigal→ Majestic (Local)</button>
+                    </div>
+                </div>
+                
+                <div id="premiumFeatures" class="premium-features">
+                    <div class="advanced-analysis">
+                        <h4>🚀 Premium Features <span class="premium-badge">PREMIUM</span></h4>
+                        
+                        <div class="weather-info">
+                            <h5>🌤️ Weather Impact Analysis</h5>
+                            <p><strong>Current Conditions:</strong> Partly Cloudy, 28°C</p>
+                            <p><strong>Signal Impact:</strong> Minimal - Good weather conditions</p>
+                            <p><strong>Rain Forecast:</strong> 15% chance in next 2 hours</p>
+                        </div>
+                        
+                        <div class="traffic-info">
+                            <h5>🚗 Live Traffic Integration</h5>
+                            <p><strong>Route Congestion:</strong> Moderate traffic on highway</p>
+                            <p><strong>Alternative Routes:</strong> 2 faster options available</p>
+                            <p><strong>Peak Hours:</strong> Avoid 8-10 AM, 6-8 PM</p>
+                        </div>
+                        
+                        <div class="prediction-accuracy">
+                            <h5>🤖 AI Prediction Accuracy</h5>
+                            <p><strong>Model Confidence:</strong> 94.2% accuracy</p>
+                            <p><strong>Historical Data:</strong> Based on 50,000+ routes</p>
+                            <p><strong>Real-time Updates:</strong> Every 5 minutes</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="location-input">
+                    <h3>🗺️ Route to Destination(Beta)</h3>
+                    <div class="input-group">
+                        <label>Point B - Destination:</label>
+                        <input type="text" id="destination" placeholder="Enter destination (e.g., Mumbai, Delhi)">
+                    </div>
+                    <div class="input-group">
+                        <label>Current Carrier:</label>
+                        <select id="carrierSelect" disabled>
+                            <option value="JIO">Jio</option>
+                            <option value="AIRTEL">Airtel</option>
+                            <option value="VI">Vi (Vodafone Idea)</option>
+                            <option value="BSNL">BSNL</option>
+                        </select>
+                    </div>
+                    <button class="btn" id="getLocationBtn" onclick="initializeCurrentLocation()">📍 Get My Location & Plan Route</button>
+                    <button class="btn" id="planRouteBtn" onclick="planRoute()" disabled style="margin-top: 10px;">🗺️ Plan Route</button>
+                </div>
+                
+                <div class="route-legend">
+                    <h4>📊 Signal Strength Legend</h4>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #4CAF50;"></div>
+                        <span>Strong Signal (Good Coverage)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #2196F3;"></div>
+                        <span>Average Signal (Fair Coverage)</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background: #F44336;"></div>
+                        <span>No Signal (Poor Coverage)</span>
+                    </div>
+                </div>
+                
+                <div id="routeAnalysis" class="route-analysis" style="display: none;">
+                    <h4>📊 Route Analysis</h4>
+                    <div id="analysisContent"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Leaflet JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    
+    <script>
+        // Global variables
+        let map, currentLocationMarker, destinationMarker, routePolylines = [];
+        let userLocation = null;
+        let alertTimeout = null;
+        let selectedCarrier = null;
+        let locationWatchId = null;
+        
+        // Demo simulation variables
+        let simulationActive = false;
+        let simulationInterval = null;
+        let simulationProgress = 0;
+        let simulationStartLocation = null;
+        let simulationEndLocation = null;
+        let simulationRoutePoints = [];
+        let simulationCurrentIndex = 0;
+        let simulationStartTime = null;
+        let simulationSpeed = 'medium';
+        let simulationIntervalTime = 200;
+        let lastSignalStrength = null;
+        let upcomingSignalStrength = null;
+        let currentRouteSignalPattern = null; // Store the signal pattern of current route
+        let lastAlertedTransition = null; // Track last alerted transition to prevent duplicates
+        let isVoiceSpeaking = false; // Track if voice is currently speaking
+
+        // Demo route data with realistic signal patterns
+        const demoRoutes = {
+            'mumbai-delhi': {
+                start: [19.0760, 72.8777],
+                end: [28.7041, 77.1025],
+                name: 'Mumbai → Delhi',
+                description: 'Highway route with one critical signal gap',
+                signalPattern: [3, 3, 2, 3, 2, 3, 2, 3, 3, 1, 2, 3, 2],
+                type: 'long-distance',
+                zoomLevel: 6
+            },
+            'bangalore-chennai': {
+                start: [12.9716, 77.5946],
+                end: [13.0827, 80.2707],
+                name: 'Bangalore → Chennai',
+                description: 'Good coverage route through tech corridor',
+                signalPattern: [3, 3, 2, 3, 2, 3, 3, 3, 2, 3, 1, 2, 3, 2],
+                type: 'long-distance',
+                zoomLevel: 7
+            },
+            'kolkata-guwahati': {
+                start: [22.5726, 88.3639],
+                end: [26.1445, 91.7362],
+                name: 'Kolkata → Guwahati',
+                description: 'Mixed signal strength through eastern regions',
+                signalPattern: [3, 2, 2, 3, 2, 2, 3, 2, 1, 2, 2, 3],
+                type: 'long-distance',
+                zoomLevel: 6
+            },
+            'delhi-manali': {
+                start: [28.7041, 77.1025],
+                end: [32.2396, 77.1887],
+                name: 'Delhi → Manali',
+                description: 'Mountain route with one challenging signal zone',
+                signalPattern: [3, 2, 2, 3, 2, 3, 2, 2, 1, 2, 2, 2, 2, 3, 2],
+                type: 'long-distance',
+                zoomLevel: 7
+            },
+            'bangalore-mysore': {
+                start: [12.9716, 77.5946],
+                end: [12.2958, 76.6394],
+                name: 'Bangalore → Mysore',
+                description: 'Short highway route with one signal gap',
+                signalPattern: [3, 2, 2, 3, 2, 1, 3, 2],
+                type: 'short-distance',
+                zoomLevel: 10
+            },
+            'Kunigal-majestic': {
+                start: [13, 77],
+                end: [12.9767, 77.5733],
+                name: 'Kunigal → Majestic',
+                description: 'Local Bengaluru route with one urban signal dead zone',
+                signalPattern: [3, 2, 2, 2, 3, 1, 3, 2],
+                type: 'local',
+                zoomLevel: 10
+            }
+        };
+
+        // Page navigation functions
+        function showLogin() {
+            document.getElementById('landingPage').style.display = 'none';
+            document.getElementById('loginPage').style.display = 'flex';
+        }
+
+        function handleLogin(event) {
+            event.preventDefault();
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            if (username === 'admin' && password === 'admin') {
+                document.getElementById('loginPage').style.display = 'none';
+                document.getElementById('subscriptionPage').style.display = 'flex';
+            } else {
+                alert('Invalid credentials! Use username: admin, password: admin');
+            }
+        }
+
+        // Global subscription state
+        let userPlan = 'basic';
+
+        function selectPlan(plan) {
+            userPlan = plan;
+            
+            if (plan === 'premium') {
+                // Simulate payment process
+                const confirmPayment = confirm('🚀 Upgrade to Premium for ₹199/month?\n\n✅ Weather integration\n✅ Traffic analysis\n✅ AI predictions\n✅ Advanced analytics\n✅ Priority support\n\nProceed with payment?');
+                
+                if (confirmPayment) {
+                    alert('🎉 Payment Successful!\nWelcome to SignalScope Premium!\n\nPremium features are coming soon!\nRedirecting you back to the home page...');
+                    
+                    // Premium features not developed yet - redirect to landing page
+                    document.getElementById('subscriptionPage').style.display = 'none';
+                    document.getElementById('landingPage').style.display = 'flex';
+                    
+                    // Reset user plan
+                    userPlan = 'basic';
+                    return;
+                } else {
+                    userPlan = 'basic';
+                    return;
+                }
+            }
+            
+            // Basic plan continues to carrier selection
+            document.getElementById('subscriptionPage').style.display = 'none';
+            document.getElementById('carrierPage').style.display = 'flex';
+        }
+
+        function selectCarrier(carrier) {
+            selectedCarrier = carrier;
+            
+            // Remove selected class from all cards
+            document.querySelectorAll('.carrier-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // Add selected class to clicked card
+            event.target.closest('.carrier-card').classList.add('selected');
+            
+            // Enable continue button
+            const continueBtn = document.getElementById('continueBtn');
+            continueBtn.classList.add('enabled');
+            continueBtn.disabled = false;
+        }
+
+        function enterApp() {
+            if (!selectedCarrier) return;
+            
+            document.getElementById('carrierPage').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'block';
+            
+            // Set the selected carrier in the dropdown
+            document.getElementById('carrierSelect').value = selectedCarrier;
+            
+            // Show premium features if user has premium plan
+            if (userPlan === 'premium') {
+                document.getElementById('premiumFeatures').style.display = 'block';
+                // Add premium badge to header
+                const header = document.querySelector('.header h1');
+                if (!header.querySelector('.premium-badge')) {
+                    header.innerHTML += ' <span class="premium-badge">PREMIUM</span>';
+                }
+            }
+            
+            // Show demo simulation button
+            document.getElementById('demoSimulationBtn').style.display = 'block';
+            
+            // Initialize map
+            initializeMap();
+        }
+
+        function logout() {
+            selectedCarrier = null;
+            userLocation = null;
+            
+            // Stop location tracking
+            stopLocationTracking();
+            
+            // Clear map
+            if (map) {
+                routePolylines.forEach(polyline => map.removeLayer(polyline));
+                routePolylines = [];
+                if (currentLocationMarker) map.removeLayer(currentLocationMarker);
+                if (destinationMarker) map.removeLayer(destinationMarker);
+            }
+            
+            // Reset UI
+            document.getElementById('appContainer').style.display = 'none';
+            document.getElementById('landingPage').style.display = 'flex';
+            document.getElementById('currentLocationInfo').style.display = 'none';
+            document.getElementById('routeAnalysis').style.display = 'none';
+            document.getElementById('getLocationBtn').textContent = '📍 Get My Location & Plan Route';
+            document.getElementById('getLocationBtn').style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+            document.getElementById('getLocationBtn').disabled = false;
+            document.getElementById('planRouteBtn').disabled = true;
+            document.getElementById('destination').value = '';
+            
+            // Hide demo simulation elements
+            document.getElementById('demoSimulationBtn').style.display = 'none';
+            document.getElementById('simulationInfo').style.display = 'none';
+            document.getElementById('speedMenu').style.display = 'none';
+            stopDemoSimulation();
+        }
+
+        function initializeMap() {
+            if (map) {
+                map.remove();
+            }
+            map = L.map('map').setView([20.5937, 78.9629], 5);
+            
+            // Add OpenStreetMap tiles
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+        }
+
+        // Load demo route function
+        function loadDemoRoute(routeKey) {
+            const route = demoRoutes[routeKey];
+            if (!route) return;
+            
+            // Clear previous route
+            routePolylines.forEach(polyline => map.removeLayer(polyline));
+            routePolylines = [];
+            
+            if (currentLocationMarker) map.removeLayer(currentLocationMarker);
+            if (destinationMarker) map.removeLayer(destinationMarker);
+            
+            // Add start marker (Point A)
+            currentLocationMarker = L.marker(route.start, {
+                icon: L.divIcon({
+                    html: '<div style="background: #4CAF50; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">A</div>',
+                    className: 'current-location-icon',
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10]
+                })
+            }).addTo(map);
+            
+            // Add end marker (Point B)
+            destinationMarker = L.marker(route.end, {
+                icon: L.divIcon({
+                    html: '<div style="background: #F44336; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">B</div>',
+                    className: 'destination-icon',
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10]
+                })
+            }).addTo(map);
+            
+            // Generate route points
+            const routePoints = generateRoutePoints(route.start, route.end, route.signalPattern.length);
+            
+            // Create route segments with predefined signal pattern
+            let noSignalCount = 0, weakSignalCount = 0, strongSignalCount = 0;
+            
+            for (let i = 0; i < routePoints.length - 1; i++) {
+                const startPoint = routePoints[i];
+                const endPoint = routePoints[i + 1];
+                const signalStrength = route.signalPattern[i] || 2;
+                const color = getSignalColor(signalStrength);
+                
+                // Create polyline segment
+                const segment = L.polyline([startPoint, endPoint], {
+                    color: color,
+                    weight: 6,
+                    opacity: 0.8
+                }).addTo(map);
+                
+                routePolylines.push(segment);
+                
+                // Count signal types
+                if (signalStrength === 1) noSignalCount++;
+                else if (signalStrength === 2) weakSignalCount++;
+                else strongSignalCount++;
+                
+                // Add popup to segment
+                segment.bindPopup(`
+                    <div>
+                        <h4>${selectedCarrier || 'Demo'} Signal Strength</h4>
+                        <p style="color: ${color}; font-weight: bold;">${getSignalText(signalStrength)}</p>
+                        <p>Route Segment ${i + 1}</p>
+                    </div>
+                `);
+            }
+            
+            // Fit map to show entire route with appropriate zoom level
+            const routeBounds = L.latLngBounds(routePoints);
+            if (route.zoomLevel) {
+                // For short distance routes, use specific zoom level for better detail
+                const centerLat = (route.start[0] + route.end[0]) / 2;
+                const centerLng = (route.start[1] + route.end[1]) / 2;
+                map.setView([centerLat, centerLng], route.zoomLevel);
+            } else {
+                map.fitBounds(routeBounds, { padding: [20, 20] });
+            }
+            
+            // Show route analysis
+            displayDemoRouteAnalysis(route, noSignalCount, weakSignalCount, strongSignalCount);
+            
+            // Generate alerts
+            generateRouteAlerts(noSignalCount, weakSignalCount, strongSignalCount, route.signalPattern.length);
+        }
+
+        function displayDemoRouteAnalysis(route, noSignalCount, weakSignalCount, strongSignalCount) {
+            const analysisDiv = document.getElementById('routeAnalysis');
+            const contentDiv = document.getElementById('analysisContent');
+            const totalSegments = route.signalPattern.length;
+            
+            contentDiv.innerHTML = `
+                <div class="analysis-item">
+                    <span>🎯 Demo Route:</span>
+                    <strong>${route.name}</strong>
+                </div>
+                <div class="analysis-item">
+                    <span>📱 Carrier:</span>
+                    <strong>${selectedCarrier || 'Demo'}</strong>
+                </div>
+                <div class="analysis-item">
+                    <span>📝 Description:</span>
+                    <strong>${route.description}</strong>
+                </div>
+                <div class="analysis-item" style="background: #ffebee;">
+                    <span>❌ No Signal Areas:</span>
+                    <strong>${noSignalCount} segments (${Math.round(noSignalCount/totalSegments*100)}%)</strong>
+                </div>
+                <div class="analysis-item" style="background: #e3f2fd;">
+                    <span>📶 Average Signal:</span>
+                    <strong>${weakSignalCount} segments (${Math.round(weakSignalCount/totalSegments*100)}%)</strong>
+                </div>
+                <div class="analysis-item" style="background: #e8f5e8;">
+                    <span>✅ Strong Signal:</span>
+                    <strong>${strongSignalCount} segments (${Math.round(strongSignalCount/totalSegments*100)}%)</strong>
+                </div>
+            `;
+            
+            analysisDiv.style.display = 'block';
+        }
+
+        // Initialize app on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show landing page by default
+            document.getElementById('landingPage').style.display = 'flex';
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('subscriptionPage').style.display = 'none';
+            document.getElementById('carrierPage').style.display = 'none';
+            document.getElementById('appContainer').style.display = 'none';
+        });
+
+        // City coordinates for demo destinations
+        const cityCoordinates = {
+            'mumbai': [19.0760, 72.8777],
+            'delhi': [28.7041, 77.1025],
+            'bangalore': [12.9716, 77.5946],
+            'chennai': [13.0827, 80.2707],
+            'kolkata': [22.5726, 88.3639],
+            'hyderabad': [17.3850, 78.4867],
+            'pune': [18.5204, 73.8567],
+            'ahmedabad': [23.0225, 72.5714],
+            'jaipur': [26.9124, 75.7873],
+            'lucknow': [26.8467, 80.9462]
+        };
+
+        // Generate signal strength based on location and carrier
+        function generateSignalStrength(lat, lng, carrier) {
+            const locationSeed = Math.sin(lat * 0.01) * Math.cos(lng * 0.01);
+            const carrierSeed = carrier.charCodeAt(0) * 0.001;
+            const randomFactor = (Math.random() - 0.5) * 0.5;
+            const combinedFactor = locationSeed + carrierSeed + randomFactor;
+            
+            if (combinedFactor < -0.3) return 1; // No signal
+            if (combinedFactor < 0.1) return 2;  // Average signal
+            return 3; // Strong signal
+        }
+
+        // Get color for signal strength
+        function getSignalColor(strength) {
+            switch(strength) {
+                case 1: return '#F44336'; // Red - No signal
+                case 2: return '#2196F3'; // Blue - Average signal
+                case 3: return '#4CAF50'; // Green - Strong signal
+                default: return '#999999';
+            }
+        }
+
+        // Get signal strength text
+        function getSignalText(strength) {
+            switch(strength) {
+                case 1: return 'No Signal';
+                case 2: return 'Average Signal';
+                case 3: return 'Strong Signal';
+                default: return 'Unknown';
+            }
+        }
+
+        // Show alert notification
+        function showAlert(message, type = 'warning', duration = 5000) {
+            // Remove existing alert
+            const existingAlert = document.querySelector('.alert-notification');
+            if (existingAlert) {
+                existingAlert.remove();
+            }
+
+            // Create new alert
+            const alert = document.createElement('div');
+            alert.className = `alert-notification ${type}`;
+            alert.innerHTML = `
+                <button class="alert-close" onclick="closeAlert()">&times;</button>
+                <div class="alert-title">⚠️ Route Alert</div>
+                <div>${message}</div>
+            `;
+
+            document.body.appendChild(alert);
+
+            // Show alert with animation
+            setTimeout(() => alert.classList.add('show'), 100);
+
+            // Auto close after duration
+            if (alertTimeout) clearTimeout(alertTimeout);
+            alertTimeout = setTimeout(() => {
+                closeAlert();
+            }, duration);
+        }
+
+        // Close alert notification
+        function closeAlert() {
+            const alert = document.querySelector('.alert-notification');
+            if (alert) {
+                alert.classList.remove('show');
+                setTimeout(() => alert.remove(), 300);
+            }
+            if (alertTimeout) {
+                clearTimeout(alertTimeout);
+                alertTimeout = null;
+            }
+        }
+
+        // Initialize current location with real-time tracking
+        function initializeCurrentLocation() {
+            const btn = document.getElementById('getLocationBtn');
+            btn.textContent = '📍 Getting Location...';
+            btn.disabled = true;
+
+            if (navigator.geolocation) {
+                // Start watching position for real-time updates
+                locationWatchId = navigator.geolocation.watchPosition(
+                    function(position) {
+                        const newLocation = {
+                            lat: position.coords.latitude,
+                            lng: position.coords.longitude
+                        };
+                        
+                        // Check if location has changed significantly (more than ~10 meters)
+                        const hasLocationChanged = !userLocation || 
+                            Math.abs(newLocation.lat - userLocation.lat) > 0.0001 || 
+                            Math.abs(newLocation.lng - userLocation.lng) > 0.0001;
+                        
+                        userLocation = newLocation;
+                        
+                        // Update UI
+                        const locationInfo = document.getElementById('currentLocationInfo');
+                        const locationText = document.getElementById('currentLocationText');
+                        locationText.textContent = `Lat: ${userLocation.lat.toFixed(4)}, Lng: ${userLocation.lng.toFixed(4)} 🔄 Live`;
+                        locationInfo.style.display = 'block';
+                        
+                        // Update or create marker for current location
+                        if (currentLocationMarker) {
+                            // Animate marker movement to new position
+                            currentLocationMarker.setLatLng([userLocation.lat, userLocation.lng]);
+                        } else {
+                            // Create new marker
+                            currentLocationMarker = L.marker([userLocation.lat, userLocation.lng], {
+                                icon: L.divIcon({
+                                    html: '<div style="background: #4CAF50; color: white; border-radius: 50%; width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); animation: pulse 2s infinite;">A</div>',
+                                    className: 'current-location-icon',
+                                    iconSize: [24, 24],
+                                    iconAnchor: [12, 12]
+                                })
+                            }).addTo(map);
+                            
+                            // Center map on initial location
+                            map.setView([userLocation.lat, userLocation.lng], 15);
+                        }
+                        
+                        // Update popup content
+                        currentLocationMarker.bindPopup(`
+                            <div style="text-align: center;">
+                                <h4>📍 Point A - Your Live Location</h4>
+                                <p>Lat: ${userLocation.lat.toFixed(6)}<br>
+                                Lng: ${userLocation.lng.toFixed(6)}</p>
+                                <p style="color: #4CAF50; font-weight: bold;">🔄 Tracking Live</p>
+                                <p style="font-size: 0.8rem; color: #666;">Accuracy: ±${Math.round(position.coords.accuracy)}m</p>
+                            </div>
+                        `);
+                        
+                        // Update button text and enable route planning
+                        if (btn.textContent !== '🔄 Live Tracking') {
+                            btn.textContent = '🔄 Live Tracking';
+                            btn.style.background = 'linear-gradient(135deg, #4CAF50 0%, #45a049 100%)';
+                            document.getElementById('planRouteBtn').disabled = false;
+                            showAlert('✅ Live location tracking activated! Point A will move as you move.', 'success');
+                        }
+                        
+                        // If location changed significantly and we have a route, update it
+                        if (hasLocationChanged && destinationMarker && routePolylines.length > 0) {
+                            showAlert('📍 Location updated! Route recalculated based on your new position.', 'success', 3000);
+                            // Auto-update route if destination exists
+                            setTimeout(() => {
+                                planRoute();
+                            }, 1000);
+                        }
+                    },
+                    function(error) {
+                        console.error('Location error:', error);
+                        btn.textContent = '❌ Location Access Denied';
+                        btn.style.background = 'linear-gradient(135deg, #F44336 0%, #d32f2f 100%)';
+                        
+                        let errorMessage = 'Unable to access your location. ';
+                        switch(error.code) {
+                            case error.PERMISSION_DENIED:
+                                errorMessage += 'Please enable location permissions and try again.';
+                                break;
+                            case error.POSITION_UNAVAILABLE:
+                                errorMessage += 'Location information is unavailable.';
+                                break;
+                            case error.TIMEOUT:
+                                errorMessage += 'Location request timed out.';
+                                break;
+                            default:
+                                errorMessage += 'An unknown error occurred.';
+                                break;
+                        }
+                        showAlert(errorMessage, 'danger');
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 15000,
+                        maximumAge: 5000  // Accept cached position up to 5 seconds old
+                    }
+                );
+            } else {
+                btn.textContent = '❌ Geolocation Not Supported';
+                btn.style.background = 'linear-gradient(135deg, #F44336 0%, #d32f2f 100%)';
+                showAlert('Geolocation is not supported by this browser.', 'danger');
+            }
+        }
+        
+        // Stop location tracking
+        function stopLocationTracking() {
+            if (locationWatchId !== null) {
+                navigator.geolocation.clearWatch(locationWatchId);
+                locationWatchId = null;
+                
+                const btn = document.getElementById('getLocationBtn');
+                btn.textContent = '📍 Get My Location & Plan Route';
+                btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                btn.disabled = false;
+                
+                showAlert('📍 Location tracking stopped.', 'warning', 3000);
+            }
+        }
+
+        // Find destination coordinates
+        function findDestinationCoords(destination) {
+            const dest = destination.toLowerCase().trim();
+            
+            // Check if it's in our city list
+            if (cityCoordinates[dest]) {
+                return cityCoordinates[dest];
+            }
+            
+            // Check partial matches
+            for (let city in cityCoordinates) {
+                if (city.includes(dest) || dest.includes(city)) {
+                    return cityCoordinates[city];
+                }
+            }
+            
+            return null;
+        }
+
+        // Generate route points between two locations
+        function generateRoutePoints(start, end, numPoints = 20) {
+            const points = [];
+            
+            for (let i = 0; i <= numPoints; i++) {
+                const progress = i / numPoints;
+                const lat = start[0] + (end[0] - start[0]) * progress;
+                const lng = start[1] + (end[1] - start[1]) * progress;
+                
+                // Add some realistic curve to the route
+                const curveFactor = Math.sin(progress * Math.PI) * 0.05;
+                const curvedLat = lat + curveFactor;
+                const curvedLng = lng + curveFactor;
+                
+                points.push([curvedLat, curvedLng]);
+            }
+            
+            return points;
+        }
+
+        // Plan route from current location to destination
+        function planRoute() {
+            if (!userLocation) {
+                showAlert('Please detect your current location first!', 'warning');
+                return;
+            }
+
+            const destination = document.getElementById('destination').value.trim();
+            if (!destination) {
+                showAlert('Please enter a destination!', 'warning');
+                return;
+            }
+
+            const destCoords = findDestinationCoords(destination);
+            if (!destCoords) {
+                showAlert(`Destination "${destination}" not found. Try: Mumbai, Delhi, Bangalore, Chennai, etc.`, 'warning');
+                return;
+            }
+
+            // Clear previous route
+            routePolylines.forEach(polyline => map.removeLayer(polyline));
+            routePolylines = [];
+
+            if (destinationMarker) {
+                map.removeLayer(destinationMarker);
+            }
+
+            // Add destination marker
+            destinationMarker = L.marker(destCoords, {
+                icon: L.divIcon({
+                    html: '<div style="background: #F44336; color: white; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-weight: bold; border: 3px solid white; box-shadow: 0 2px 5px rgba(0,0,0,0.3);">B</div>',
+                    className: 'destination-icon',
+                    iconSize: [20, 20],
+                    iconAnchor: [10, 10]
+                })
+            }).addTo(map);
+
+            destinationMarker.bindPopup(`
+                <div style="text-align: center;">
+                    <h4>📍 Point B - ${destination.toUpperCase()}</h4>
+                    <p>Your Destination</p>
+                </div>
+            `);
+
+            // Generate route points
+            const routePoints = generateRoutePoints([userLocation.lat, userLocation.lng], destCoords);
+            const selectedCarrier = document.getElementById('carrierSelect').value;
+
+            // Analyze signal strength along route
+            let segmentData = [];
+            let weakSignalCount = 0;
+            let noSignalCount = 0;
+            let strongSignalCount = 0;
+
+            // Create route segments with different colors based on signal strength
+            for (let i = 0; i < routePoints.length - 1; i++) {
+                const startPoint = routePoints[i];
+                const endPoint = routePoints[i + 1];
+                const midLat = (startPoint[0] + endPoint[0]) / 2;
+                const midLng = (startPoint[1] + endPoint[1]) / 2;
+
+                const signalStrength = generateSignalStrength(midLat, midLng, selectedCarrier);
+                const color = getSignalColor(signalStrength);
+
+                // Create polyline segment
+                const segment = L.polyline([startPoint, endPoint], {
+                    color: color,
+                    weight: 6,
+                    opacity: 0.8
+                }).addTo(map);
+
+                routePolylines.push(segment);
+
+                // Collect data for analysis
+                segmentData.push({
+                    point: [midLat, midLng],
+                    strength: signalStrength,
+                    color: color
+                });
+
+                // Count signal types
+                if (signalStrength === 1) noSignalCount++;
+                else if (signalStrength === 2) weakSignalCount++;
+                else strongSignalCount++;
+
+                // Add popup to segment
+                segment.bindPopup(`
+                    <div>
+                        <h4>${selectedCarrier} Signal Strength</h4>
+                        <p style="color: ${color}; font-weight: bold;">${getSignalText(signalStrength)}</p>
+                        <p>Route Segment ${i + 1}</p>
+                    </div>
+                `);
+            }
+
+            // Fit map to show entire route
+            const routeBounds = L.latLngBounds(routePoints);
+            map.fitBounds(routeBounds, { padding: [20, 20] });
+
+            // Show route analysis
+            displayRouteAnalysis(segmentData, selectedCarrier, destination);
+
+            // Generate alerts based on route analysis
+            generateRouteAlerts(noSignalCount, weakSignalCount, strongSignalCount, routePoints.length);
+        }
+
+        // Display route analysis
+        function displayRouteAnalysis(segmentData, carrier, destination) {
+            const analysisDiv = document.getElementById('routeAnalysis');
+            const contentDiv = document.getElementById('analysisContent');
+
+            const noSignalCount = segmentData.filter(s => s.strength === 1).length;
+            const weakSignalCount = segmentData.filter(s => s.strength === 2).length;
+            const strongSignalCount = segmentData.filter(s => s.strength === 3).length;
+            const totalSegments = segmentData.length;
+
+            contentDiv.innerHTML = `
+                <div class="analysis-item">
+                    <span>🎯 Destination:</span>
+                    <strong>${destination.toUpperCase()}</strong>
+                </div>
+                <div class="analysis-item">
+                    <span>📱 Carrier:</span>
+                    <strong>${carrier}</strong>
+                </div>
+                <div class="analysis-item" style="background: #ffebee;">
+                    <span>❌ No Signal Areas:</span>
+                    <strong>${noSignalCount} segments (${Math.round(noSignalCount/totalSegments*100)}%)</strong>
+                </div>
+                <div class="analysis-item" style="background: #e3f2fd;">
+                    <span>📶 Average Signal:</span>
+                    <strong>${weakSignalCount} segments (${Math.round(weakSignalCount/totalSegments*100)}%)</strong>
+                </div>
+                <div class="analysis-item" style="background: #e8f5e8;">
+                    <span>✅ Strong Signal:</span>
+                    <strong>${strongSignalCount} segments (${Math.round(strongSignalCount/totalSegments*100)}%)</strong>
+                </div>
+            `;
+
+            analysisDiv.style.display = 'block';
+        }
+
+        // Voice alert functionality
+        let speechSynthesis = window.speechSynthesis;
+        let voiceEnabled = true;
+
+        function speakAlert(message) {
+            if (!voiceEnabled || !speechSynthesis) return;
+            
+            // If already speaking, queue this message
+            if (isVoiceSpeaking) {
+                return; // Skip this message to avoid interruption
+            }
+            
+            // Cancel any ongoing speech
+            speechSynthesis.cancel();
+            
+            isVoiceSpeaking = true;
+            
+            const utterance = new SpeechSynthesisUtterance(message);
+            utterance.rate = 0.9;
+            utterance.pitch = 1;
+            utterance.volume = 0.8;
+            
+            // Try to use a clear voice
+            const voices = speechSynthesis.getVoices();
+            const preferredVoice = voices.find(voice => 
+                voice.lang.includes('en') && (voice.name.includes('Google') || voice.name.includes('Microsoft'))
+            );
+            if (preferredVoice) {
+                utterance.voice = preferredVoice;
+            }
+            
+            // Mark as not speaking when done
+            utterance.onend = () => {
+                isVoiceSpeaking = false;
+            };
+            
+            utterance.onerror = () => {
+                isVoiceSpeaking = false;
+            };
+            
+            speechSynthesis.speak(utterance);
+        }
+
+        function getSignalStrengthVoiceMessage(strength) {
+            switch(strength) {
+                case 3: return "Strong signal";
+                case 2: return "Medium signal";
+                case 1: return "Weak signal detected";
+                default: return "Signal unknown";
+            }
+        }
+
+        function toggleVoiceAlerts() {
+            voiceEnabled = !voiceEnabled;
+            const toggleBtn = document.getElementById('voiceToggle');
+            if (voiceEnabled) {
+                toggleBtn.innerHTML = '🔊 Voice Alerts: ON';
+                toggleBtn.style.background = '#28a745';
+                speakAlert('Voice alerts enabled');
+            } else {
+                toggleBtn.innerHTML = '🔇 Voice Alerts: OFF';
+                toggleBtn.style.background = '#dc3545';
+                speechSynthesis.cancel(); // Stop any ongoing speech
+            }
+        }
+
+        function announceSignalPattern(signalPattern) {
+            if (!voiceEnabled) return;
+            
+            let announcement = "Signal pattern analysis: ";
+            const weakCount = signalPattern.filter(s => s === 1).length;
+            const mediumCount = signalPattern.filter(s => s === 2).length;
+            const strongCount = signalPattern.filter(s => s === 3).length;
+            
+            if (weakCount > signalPattern.length * 0.3) {
+                announcement += "Multiple weak signal zones detected. ";
+            }
+            if (strongCount > signalPattern.length * 0.6) {
+                announcement += "Good signal coverage overall. ";
+            }
+            
+            speakAlert(announcement);
+            
+            // Announce individual signal changes with delay
+            let delay = 2000;
+            for (let i = 0; i < Math.min(signalPattern.length, 8); i++) {
+                setTimeout(() => {
+                    const message = `Point ${i + 1}: ${getSignalStrengthVoiceMessage(signalPattern[i])}`;
+                    speakAlert(message);
+                }, delay);
+                delay += 1500;
+            }
+        }
+
+        // Generate route alerts
+        function generateRouteAlerts(noSignalCount, weakSignalCount, strongSignalCount, totalSegments) {
+            const noSignalPercent = Math.round(noSignalCount/totalSegments*100);
+
+            // Only show alerts if there are red zones (no signal areas)
+            if (noSignalPercent > 0) {
+                let alertMessage = '';
+                let voiceMessage = '';
+                let alertType = 'danger';
+
+                if (noSignalPercent > 30) {
+                    alertMessage = `🚨 CRITICAL: ${noSignalPercent}% of your route has NO SIGNAL! Consider completing all important calls before starting your journey. Plan for offline navigation and emergency contacts.`;
+                    voiceMessage = `Critical alert: ${noSignalPercent} percent of your route has no signal coverage. Complete important calls before starting your journey.`;
+                } else if (noSignalPercent > 10) {
+                    alertMessage = `⚠️ WARNING: ${noSignalPercent}% of your route has no signal coverage. Complete important calls before entering these areas. Check the red sections on your route.`;
+                    voiceMessage = `Warning: ${noSignalPercent} percent of your route has no signal coverage. Complete important calls before entering these areas.`;
+                } else {
+                    alertMessage = `⚠️ NOTICE: ${noSignalPercent}% of your route has NO SIGNAL areas. Be prepared for connectivity loss in red sections.`;
+                    voiceMessage = `Notice: ${noSignalPercent} percent of your route has no signal areas. Be prepared for connectivity loss.`;
+                }
+
+                // Show the alert
+                showAlert(alertMessage, alertType, 8000);
+                
+                // Don't speak initial alerts - only during simulation
+
+                // Schedule additional tip for red zone areas
+                setTimeout(() => {
+                    const tipMessage = `💡 TIP: Download offline maps and inform family/friends about no-signal areas (${noSignalPercent}% of route). Carry emergency numbers written down.`;
+                    const tipVoice = `Tip: Download offline maps and inform family about no signal areas. Carry emergency numbers written down.`;
+                    showAlert(tipMessage, 'danger', 6000);
+                    // Don't speak tip alerts - only during simulation
+                }, 8500);
+            }
+            // No alerts shown for routes with good coverage
+        }
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show initial instruction
+            showAlert('Welcome to SignalScope! Click "Get My Location" to start, then click anywhere on the map to set your destination.', 'success', 4000);
+        });
+
+        // Handle Enter key in destination input
+        document.getElementById('destination').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                planRouteFromInput();
+            }
+        });
+
+        // Demo Simulation Functions
+        function toggleDemoSimulation() {
+            if (simulationActive) {
+                stopDemoSimulation();
+            } else {
+                // Show speed selection menu instead of starting immediately
+                showSpeedMenu();
+            }
+        }
+        
+        function showSpeedMenu() {
+            // Check if we have a route to simulate
+            if (!currentLocationMarker || !destinationMarker) {
+                showAlert('Please set up a route first! Click on a demo route or plan your own route.', 'warning');
+                return;
+            }
+            
+            document.getElementById('speedMenu').style.display = 'block';
+            showAlert('⚡ Choose simulation speed to start the demo!', 'success', 3000);
+        }
+        
+        function selectSpeed(speed) {
+            simulationSpeed = speed;
+            
+            // Set interval time based on speed
+            switch(speed) {
+                case 'fast':
+                    simulationIntervalTime = 50;
+                    break;
+                case 'medium':
+                    simulationIntervalTime = 200;
+                    break;
+                case 'slow':
+                    simulationIntervalTime = 1000;
+                    break;
+                case 'extreme-slow':
+                    simulationIntervalTime = 5000; // 80% slower than previous 1000ms
+                    break;
+                default:
+                    simulationIntervalTime = 200;
+            }
+            
+            // Hide speed menu and start simulation
+            document.getElementById('speedMenu').style.display = 'none';
+            startDemoSimulation();
+        }
+
+        function startDemoSimulation() {
+            simulationActive = true;
+            simulationProgress = 0;
+            simulationCurrentIndex = 0;
+            simulationStartTime = Date.now();
+            lastSignalStrength = null; // Reset signal tracking
+            lastAlertedTransition = null; // Reset alert tracking
+            isVoiceSpeaking = false; // Reset voice state
+
+            // Get current positions
+            simulationStartLocation = currentLocationMarker.getLatLng();
+            simulationEndLocation = destinationMarker.getLatLng();
+
+            // Determine route type and adjust simulation parameters
+            let routeType = 'custom';
+            let numPoints = 50;
+            let matchedRoute = null;
+            
+            // Check if this is a demo route to get its type and signal pattern
+            for (let routeKey in demoRoutes) {
+                const route = demoRoutes[routeKey];
+                const startMatch = Math.abs(route.start[0] - simulationStartLocation.lat) < 0.01 && 
+                                 Math.abs(route.start[1] - simulationStartLocation.lng) < 0.01;
+                if (startMatch) {
+                    routeType = route.type;
+                    matchedRoute = route;
+                    currentRouteSignalPattern = route.signalPattern; // Store the signal pattern
+                    break;
+                }
+            }
+
+            // Adjust simulation parameters based on route type
+            if (routeType === 'local') {
+                numPoints = 100; // More points for very detailed movement
+                simulationIntervalTime = Math.max(simulationIntervalTime * 2, 400); // Slower movement
+            } else if (routeType === 'short-distance') {
+                numPoints = 75; // More points for detailed movement
+                simulationIntervalTime = Math.max(simulationIntervalTime * 1.5, 300); // Slightly slower
+            }
+
+            // Generate route points for smooth animation
+            simulationRoutePoints = generateRoutePoints(
+                [simulationStartLocation.lat, simulationStartLocation.lng],
+                [simulationEndLocation.lat, simulationEndLocation.lng],
+                numPoints
+            );
+
+            // Update button and show info panel
+            const btn = document.getElementById('demoSimulationBtn');
+            const speedText = getSpeedDisplayText(simulationSpeed);
+            btn.textContent = `⏹️ Stop (${speedText})`;
+            btn.style.background = 'linear-gradient(45deg, #F44336, #d32f2f)';
+
+            document.getElementById('simulationInfo').style.display = 'block';
+            document.getElementById('simSpeed').textContent = speedText;
+
+            // Start simulation interval with selected speed
+            simulationInterval = setInterval(updateSimulation, simulationIntervalTime);
+
+            showAlert(`🚀 Demo simulation started at ${speedText} speed! Watch for signal zone alerts as you travel.`, 'success', 3000);
+        }
+        
+        function getSpeedDisplayText(speed) {
+            switch(speed) {
+                case 'fast': return 'Fast';
+                case 'medium': return 'Medium';
+                case 'slow': return 'Slow';
+                case 'extreme-slow': return 'Extreme Slow';
+                default: return 'Medium';
+            }
+        }
+
+        function stopDemoSimulation() {
+            if (!simulationActive) return;
+
+            simulationActive = false;
+            if (simulationInterval) {
+                clearInterval(simulationInterval);
+                simulationInterval = null;
+            }
+
+            // Reset button
+            const btn = document.getElementById('demoSimulationBtn');
+            btn.textContent = '🚀Demo';
+            btn.style.background = 'linear-gradient(45deg, #4CAF50, #45a049)';
+
+            // Hide info panel
+            document.getElementById('simulationInfo').style.display = 'none';
+
+            showAlert('⏹️ Demo simulation stopped.', 'warning', 2000);
+        }
+
+        function updateSimulation() {
+            if (!simulationActive || simulationCurrentIndex >= simulationRoutePoints.length - 1) {
+                // Simulation completed
+                simulationProgress = 100;
+                updateSimulationInfo();
+                showAlert('🎉 Simulation completed! Point A has reached the destination.', 'success', 4000);
+                stopDemoSimulation();
+                return;
+            }
+
+            // Move to next point
+            const currentPoint = simulationRoutePoints[simulationCurrentIndex];
+            currentLocationMarker.setLatLng([currentPoint[0], currentPoint[1]]);
+
+            // Get signal strength - use pattern if available, otherwise generate
+            let currentSignalStrength;
+            let upcomingSignalStrength;
+            
+            if (currentRouteSignalPattern && currentRouteSignalPattern.length > 0) {
+                // Map current index to signal pattern index
+                const patternIndex = Math.floor((simulationCurrentIndex / simulationRoutePoints.length) * currentRouteSignalPattern.length);
+                const upcomingPatternIndex = Math.min(patternIndex + 1, currentRouteSignalPattern.length - 1);
+                
+                currentSignalStrength = currentRouteSignalPattern[patternIndex];
+                upcomingSignalStrength = currentRouteSignalPattern[upcomingPatternIndex];
+            } else {
+                // Fallback to random generation for custom routes
+                currentSignalStrength = generateSignalStrength(currentPoint[0], currentPoint[1], selectedCarrier || 'JIO');
+                
+                const lookAheadIndex = Math.min(simulationCurrentIndex + 3, simulationRoutePoints.length - 1);
+                const upcomingPoint = simulationRoutePoints[lookAheadIndex];
+                upcomingSignalStrength = generateSignalStrength(upcomingPoint[0], upcomingPoint[1], selectedCarrier || 'JIO');
+            }
+
+            // Show precaution alerts when signal zone is about to change
+            checkAndShowSignalPrecautionAlerts(currentSignalStrength, upcomingSignalStrength);
+
+            // Update last signal strength for next iteration
+            lastSignalStrength = currentSignalStrength;
+
+            // Update progress
+            simulationProgress = (simulationCurrentIndex / (simulationRoutePoints.length - 1)) * 100;
+            simulationCurrentIndex++;
+
+            // Update simulation info
+            updateSimulationInfo();
+
+            // Update marker popup
+            const currentPos = currentLocationMarker.getLatLng();
+            currentLocationMarker.bindPopup(`
+                <div style="text-align: center;">
+                    <h4>🚀 Point A - Simulating Movement</h4>
+                    <p>Lat: ${currentPos.lat.toFixed(6)}<br>
+                    Lng: ${currentPos.lng.toFixed(6)}</p>
+                    <p style="color: #4CAF50; font-weight: bold;">🎯 ${simulationProgress.toFixed(1)}% Complete</p>
+                </div>
+            `);
+        }
+
+        function updateSimulationInfo() {
+            if (!simulationActive) return;
+
+            const currentPos = currentLocationMarker.getLatLng();
+            const destPos = destinationMarker.getLatLng();
+
+            // Calculate distance in KM
+            const distance = calculateDistance(currentPos.lat, currentPos.lng, destPos.lat, destPos.lng);
+
+            // Calculate elapsed time and estimated duration
+            const elapsedTime = (Date.now() - simulationStartTime) / 1000 / 60; // in minutes
+            const estimatedTotalTime = elapsedTime / (simulationProgress / 100);
+            const remainingTime = estimatedTotalTime - elapsedTime;
+
+            // Get current signal strength - use pattern if available
+            let signalStrength;
+            if (currentRouteSignalPattern && currentRouteSignalPattern.length > 0) {
+                const patternIndex = Math.floor((simulationCurrentIndex / simulationRoutePoints.length) * currentRouteSignalPattern.length);
+                signalStrength = currentRouteSignalPattern[Math.min(patternIndex, currentRouteSignalPattern.length - 1)];
+            } else {
+                signalStrength = generateSignalStrength(currentPos.lat, currentPos.lng, selectedCarrier || 'JIO');
+            }
+            const signalText = getSignalText(signalStrength);
+            const signalColor = getSignalColor(signalStrength);
+
+            // Update UI
+            document.getElementById('simDistance').textContent = `${distance.toFixed(1)} km`;
+            document.getElementById('simDuration').textContent = `${Math.max(0, remainingTime).toFixed(1)} min`;
+            document.getElementById('simSignal').innerHTML = `${signalText} <span class="signal-indicator" style="background: ${signalColor};"></span>`;
+            document.getElementById('simProgress').textContent = `${simulationProgress.toFixed(1)}%`;
+        }
+
+        function calculateDistance(lat1, lng1, lat2, lng2) {
+            const R = 6371; // Earth's radius in kilometers
+            const dLat = (lat2 - lat1) * Math.PI / 180;
+            const dLng = (lng2 - lng1) * Math.PI / 180;
+            const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+                      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+                      Math.sin(dLng/2) * Math.sin(dLng/2);
+            const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+            return R * c;
+        }
+
+        function checkAndShowSignalPrecautionAlerts(currentSignal, upcomingSignal) {
+            // Only show alerts when entering RED ZONE (no signal)
+            if (lastSignalStrength !== null && currentSignal !== upcomingSignal) {
+                let alertMessage = '';
+                let voiceMessage = '';
+                let alertType = '';
+                
+                // Create a unique key for this transition to prevent duplicates
+                const transitionKey = `${currentSignal}-to-${upcomingSignal}`;
+                
+                // Only alert when entering Red Zone (No Signal) from any other zone
+                if (upcomingSignal === 1 && currentSignal !== 1) {
+                    // Check if we already alerted for this transition recently
+                    if (lastAlertedTransition === transitionKey) {
+                        return; // Skip duplicate alert
+                    }
+                    
+                    lastAlertedTransition = transitionKey;
+                    
+                    if (currentSignal === 3) {
+                        // Dropping from strong to no signal
+                        alertMessage = '🚨 CRITICAL: Signal dropping from STRONG to NO SIGNAL! Prepare for complete connectivity loss ahead. Complete important calls now.';
+                        voiceMessage = 'Critical alert: Signal dropping from strong to no signal. Prepare for connectivity loss. Complete important calls now.';
+                    } else if (currentSignal === 2) {
+                        // Dropping from average to no signal
+                        alertMessage = '🚨 CAUTION: Entering NO SIGNAL zone ahead! Complete important calls now. Download offline maps and inform contacts about your location.';
+                        voiceMessage = 'Caution: Entering no signal zone ahead. Complete important calls now.';
+                    }
+                    alertType = 'danger';
+                }
+                // Reset the transition key when we're not entering a red zone
+                else if (upcomingSignal !== 1) {
+                    lastAlertedTransition = null;
+                }
+                
+                // Show visual alert only for red zone warnings
+                if (alertMessage) {
+                    showAlert(alertMessage, alertType, 7000);
+                    
+                    // Speak the alert during simulation (only if not already speaking)
+                    if (voiceMessage && !isVoiceSpeaking) {
+                        speakAlert(voiceMessage);
+                    }
+                }
+            }
+        }
+
+        // Make planRouteFromMap available globally for popup button
+        window.planRouteFromMap = planRouteFromMap;
+    </script>
+</body>
+</html>
